@@ -1,0 +1,25 @@
+{
+  "name": "skilldeps",
+  "version": "0.1.0",
+  "description": "Local-first dependency and contract auditor for agent SKILL.md folders.",
+  "type": "module",
+  "bin": {
+    "skilldeps": "./bin/skilldeps.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/check.js",
+    "smoke": "node bin/skilldeps.js fixtures/complete-skill --format markdown"
+  },
+  "keywords": [
+    "agents",
+    "skills",
+    "audit",
+    "cli"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
