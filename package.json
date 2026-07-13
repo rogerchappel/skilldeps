@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Local-first dependency and contract auditor for agent SKILL.md folders.",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "bin": {
     "skilldeps": "./bin/skilldeps.js"
   },
