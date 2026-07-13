@@ -20,7 +20,8 @@
   "scripts": {
     "test": "node --test",
     "check": "node scripts/check.js",
-    "smoke": "node bin/skilldeps.js fixtures/complete-skill --format markdown"
+    "smoke": "node bin/skilldeps.js fixtures/complete-skill --format markdown",
+    "package:smoke": "npm pack --dry-run"
   },
   "keywords": [
     "agents",
@@ -32,5 +33,9 @@
   "license": "MIT",
   "engines": {
     "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/skilldeps.git"
   }
 }
