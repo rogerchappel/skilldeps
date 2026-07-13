@@ -59,7 +59,7 @@ export function parseSkillFile(file) {
     text,
     lines,
     sections,
-    contracts: detectContracts(sections),
+    contracts: detectContracts(sections, text),
     references: extractReferences(text, file)
   };
 }
@@ -69,11 +69,12 @@ function extractTitle(lines) {
   return heading?.replace(/^#\s+/, "").trim();
 }
 
-function detectContracts(sections) {
+function detectContracts(sections, text) {
   const contracts = {};
   for (const [name, pattern] of Object.entries(SECTION_PATTERNS)) {
     contracts[name] = Object.keys(sections).some((section) => pattern.test(section));
   }
+  contracts.usage ||= /use this skill when|when an agent needs|trigger/i.test(text);
   return contracts;
 }
 
