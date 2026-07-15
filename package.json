@@ -37,5 +37,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rogerchappel/skilldeps.git"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/skilldeps/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/skilldeps#readme"
 }
