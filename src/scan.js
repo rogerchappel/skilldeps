@@ -12,6 +12,7 @@ const SECTION_PATTERNS = {
 };
 
 const REF_PATTERN = /(?:\]\(|(?:file|path|script|fixture|template|asset)s?\s*[:=-]\s*|`)(\.{1,2}\/[^`)`\s]+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_./-]+)(?:\)|`)?/gi;
+const IGNORED_DIRECTORIES = new Set([".git", "node_modules"]);
 
 export function findSkillFiles(inputs) {
   const found = [];
@@ -24,19 +25,24 @@ export function findSkillFiles(inputs) {
       continue;
     }
     if (stat.isDirectory()) {
-      const direct = path.join(absolute, "SKILL.md");
-      if (fs.existsSync(direct)) {
-        found.push(direct);
-        continue;
-      }
-      for (const entry of fs.readdirSync(absolute, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
-        const nested = path.join(absolute, entry.name, "SKILL.md");
-        if (fs.existsSync(nested)) found.push(nested);
-      }
+      findSkillsInDirectory(absolute, found);
     }
   }
   return [...new Set(found)].sort();
+}
+
+function findSkillsInDirectory(directory, found) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const entryPath = path.join(directory, entry.name);
+    if (entry.isFile() && entry.name === "SKILL.md") {
+      found.push(entryPath);
+    } else if (
+      entry.isDirectory() &&
+      !IGNORED_DIRECTORIES.has(entry.name)
+    ) {
+      findSkillsInDirectory(entryPath, found);
+    }
+  }
 }
 
 export function parseSkillFile(file) {
