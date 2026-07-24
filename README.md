@@ -16,6 +16,11 @@ Audit a skill pack:
 skilldeps ./skills --format json --fail-on warning
 ```
 
+Directory inputs are searched recursively, including packs that contain both a
+root `SKILL.md` and nested skills. Discovery skips `.git` and `node_modules`
+directories and does not follow directory symlinks. Pass a specific `SKILL.md`
+file to audit only that file.
+
 ## What It Checks
 
 - Required usage, tools, side-effect, approval, example, and validation sections.
@@ -40,6 +45,7 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 - Markdown parsing is intentionally lightweight.
 - It detects common relative-reference patterns, not every possible prose reference.
 - It reports contract presence, not whether the prose is high quality.
+- Directory traversal is synchronous and intended for local skill folders and packs.
 
 ## Verification
 
@@ -47,4 +53,5 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 npm test
 npm run check
 npm run smoke
+npm run package:smoke
 ```
