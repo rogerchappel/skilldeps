@@ -24,7 +24,9 @@ file to audit only that file.
 ## What It Checks
 
 - Required usage, tools, side-effect, approval, example, and validation sections.
-- Relative references such as `scripts/check.js` and `fixtures/sample.md`.
+- Relative references such as `scripts/check.js`, `fixtures/sample.md`, and
+  Markdown links with angle-bracket destinations such as
+  `[guide](<references/setup guide.md>)`.
 - Missing referenced files.
 - Mutating or external-action language without an approval section.
 
@@ -42,8 +44,11 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 
 ## Limitations
 
-- Markdown parsing is intentionally lightweight.
-- It detects common relative-reference patterns, not every possible prose reference.
+- Markdown parsing is intentionally lightweight. Standard local inline-link
+  destinations are supported, including angle brackets when a path contains
+  spaces; reference-style links and escaped closing angle brackets are not.
+- It also detects common backtick and prose relative-reference patterns, not
+  every possible prose reference.
 - It reports contract presence, not whether the prose is high quality.
 - Directory traversal is synchronous and intended for local skill folders and packs.
 
