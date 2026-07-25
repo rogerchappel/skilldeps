@@ -11,7 +11,7 @@ const SECTION_PATTERNS = {
   validation: /validation|verification|test|smoke/i
 };
 
-const REF_PATTERN = /(?:\]\(|(?:file|path|script|fixture|template|asset)s?\s*[:=-]\s*|`)(\.{1,2}\/[^`)`\s]+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_./-]+)(?:\)|`)?/gi;
+const REF_PATTERN = /\]\(\s*<([^>\r\n]+)>\s*\)|(?:\]\(|(?:file|path|script|fixture|template|asset)s?\s*[:=-]\s*|`)(\.{1,2}\/[^`)`\s]+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_./-]+)(?:\)|`)?/gi;
 const IGNORED_DIRECTORIES = new Set([".git", "node_modules"]);
 
 export function findSkillFiles(inputs) {
@@ -87,7 +87,7 @@ function detectContracts(sections, text) {
 function extractReferences(text, file) {
   const refs = [];
   for (const match of text.matchAll(REF_PATTERN)) {
-    const value = cleanReference(match[1]);
+    const value = cleanReference(match[1] ?? match[2]);
     if (!value || shouldIgnore(value)) continue;
     const line = text.slice(0, match.index).split(/\r?\n/).length;
     const resolved = path.resolve(path.dirname(file), value);
