@@ -73,3 +73,49 @@ test("incomplete fixture reports missing contracts and references", () => {
   assert.ok(result.findings.some((finding) => finding.code === "missing-tools"));
   assert.ok(result.findings.some((finding) => finding.code === "approval-boundary-missing"));
 });
+
+test("resolves angle-bracket Markdown destinations containing spaces", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-present-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+
+  fs.mkdirSync(path.join(skill, "references"));
+  fs.writeFileSync(path.join(skill, "references/present guide.md"), "# Present");
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    "# angle links\n\nSee [the guide](<references/present guide.md>).\n"
+  );
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, line, exists }) => ({ value, line, exists })),
+    [{ value: "references/present guide.md", line: 3, exists: true }]
+  );
+});
+
+test("reports missing angle-bracket Markdown destinations on the source line", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-missing-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    "# angle links\n\nSee [the guide](<references/missing guide.md>).\n"
+  );
+
+  const result = analyzeSkill(parseSkillFile(path.join(skill, "SKILL.md")));
+  const finding = result.findings.find(
+    (candidate) => candidate.code === "missing-reference"
+  );
+  assert.equal(finding?.reference, "references/missing guide.md");
+  assert.equal(finding?.line, 3);
+});
+
+test("ignores external angle-bracket Markdown destinations", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-external-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    "# external links\n\nSee [the website](<https://example.com/a path>).\n"
+  );
+
+  assert.deepEqual(parseSkillFile(path.join(skill, "SKILL.md")).references, []);
+});
