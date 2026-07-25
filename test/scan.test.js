@@ -108,3 +108,14 @@ test("reports missing angle-bracket Markdown destinations on the source line", (
   assert.equal(finding?.reference, "references/missing guide.md");
   assert.equal(finding?.line, 3);
 });
+
+test("ignores external angle-bracket Markdown destinations", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-external-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    "# external links\n\nSee [the website](<https://example.com/a path>).\n"
+  );
+
+  assert.deepEqual(parseSkillFile(path.join(skill, "SKILL.md")).references, []);
+});
