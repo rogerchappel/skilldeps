@@ -119,3 +119,37 @@ test("ignores external angle-bracket Markdown destinations", (t) => {
 
   assert.deepEqual(parseSkillFile(path.join(skill, "SKILL.md")).references, []);
 });
+
+test("normalizes local Markdown destinations for filesystem checks", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-normalized-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+
+  fs.mkdirSync(path.join(skill, "references"));
+  for (const file of ["encoded guide.md", "fragment.md", "combined guide.md", "bad%ZZ.md", "query.md"]) {
+    fs.writeFileSync(path.join(skill, "references", file), "# Present");
+  }
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    [
+      "# normalized links",
+      "",
+      "[encoded](<references/encoded%20guide.md>)",
+      "[fragment](<references/fragment.md#intro>)",
+      "[combined](<references/combined%20guide.md#intro>)",
+      "[malformed](<references/bad%ZZ.md>)",
+      "[query](<references/query.md?raw=1>)"
+    ].join("\n")
+  );
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, exists }) => ({ value, exists })),
+    [
+      { value: "references/encoded%20guide.md", exists: true },
+      { value: "references/fragment.md#intro", exists: true },
+      { value: "references/combined%20guide.md#intro", exists: true },
+      { value: "references/bad%ZZ.md", exists: true },
+      { value: "references/query.md?raw=1", exists: true }
+    ]
+  );
+});

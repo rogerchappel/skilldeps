@@ -61,3 +61,41 @@ test("cli fails for a missing angle-bracket Markdown destination", (t) => {
     "references/missing guide.md"
   );
 });
+
+test("cli accepts normalized local destinations and preserves their spelling", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-normalized-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(skill, "references"));
+  for (const file of ["encoded guide.md", "fragment.md", "combined guide.md", "bad%ZZ.md"]) {
+    fs.writeFileSync(path.join(skill, "references", file), "# Present");
+  }
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    [
+      "# normalized links",
+      "## Usage",
+      "## Tools",
+      "## Side effects",
+      "## Validation",
+      "[encoded](<references/encoded%20guide.md>)",
+      "[fragment](<references/fragment.md#intro>)",
+      "[combined](<references/combined%20guide.md#intro>)",
+      "[malformed](<references/bad%ZZ.md>)"
+    ].join("\n")
+  );
+
+  const c = capture();
+  const code = run([skill, "--format", "json"], c.io);
+  const payload = JSON.parse(c.output().stdout);
+
+  assert.equal(code, 0);
+  assert.deepEqual(
+    payload.results[0].references.map(({ value, exists }) => ({ value, exists })),
+    [
+      { value: "references/encoded%20guide.md", exists: true },
+      { value: "references/fragment.md#intro", exists: true },
+      { value: "references/combined%20guide.md#intro", exists: true },
+      { value: "references/bad%ZZ.md", exists: true }
+    ]
+  );
+});
