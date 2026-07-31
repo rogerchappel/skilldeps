@@ -90,7 +90,7 @@ function extractReferences(text, file) {
     const value = cleanReference(match[1] ?? match[2]);
     if (!value || shouldIgnore(value)) continue;
     const line = text.slice(0, match.index).split(/\r?\n/).length;
-    const resolved = path.resolve(path.dirname(file), value);
+    const resolved = path.resolve(path.dirname(file), normalizeDestination(value));
     refs.push({
       value,
       line,
@@ -99,6 +99,16 @@ function extractReferences(text, file) {
     });
   }
   return uniqueRefs(refs);
+}
+
+function normalizeDestination(value) {
+  const suffix = value.search(/[?#]/);
+  const pathname = suffix === -1 ? value : value.slice(0, suffix);
+  try {
+    return decodeURIComponent(pathname);
+  } catch {
+    return pathname;
+  }
 }
 
 function cleanReference(value) {
