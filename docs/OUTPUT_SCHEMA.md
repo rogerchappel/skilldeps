@@ -18,5 +18,7 @@ Each result contains:
 - `title`: skill title from the first H1.
 - `file`: absolute path to the inspected `SKILL.md`.
 - `contracts`: booleans for detected operational sections.
-- `references`: relative references with line number and existence status.
+- `references`: relative references with line number and existence status. The
+  reported `value` is the original destination; filesystem checks decode valid
+  percent escapes and ignore fragment or query suffixes.
 - `findings`: severity-coded audit findings.
