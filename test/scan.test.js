@@ -109,6 +109,50 @@ test("reports missing angle-bracket Markdown destinations on the source line", (
   assert.equal(finding?.line, 3);
 });
 
+test("resolves unbracketed Markdown destinations with balanced or escaped parentheses", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-parentheses-present-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+
+  fs.mkdirSync(path.join(skill, "references"));
+  for (const file of ["api(v2).md", "setup(test).md"]) {
+    fs.writeFileSync(path.join(skill, "references", file), "# Present");
+  }
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    [
+      "# parenthesized links",
+      "",
+      "See [the API](references/api(v2).md).",
+      String.raw`See [setup](references/setup\(test\).md).`
+    ].join("\n")
+  );
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, line, exists }) => ({ value, line, exists })),
+    [
+      { value: "references/api(v2).md", line: 3, exists: true },
+      { value: "references/setup(test).md", line: 4, exists: true }
+    ]
+  );
+});
+
+test("reports a missing balanced-parentheses destination on the source line", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-parentheses-missing-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    "# parenthesized links\n\nSee [the guide](references/missing(v2).md).\n"
+  );
+
+  const result = analyzeSkill(parseSkillFile(path.join(skill, "SKILL.md")));
+  const finding = result.findings.find(
+    (candidate) => candidate.code === "missing-reference"
+  );
+  assert.equal(finding?.reference, "references/missing(v2).md");
+  assert.equal(finding?.line, 3);
+});
+
 test("ignores external angle-bracket Markdown destinations", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-external-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
