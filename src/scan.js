@@ -11,7 +11,7 @@ const SECTION_PATTERNS = {
   validation: /validation|verification|test|smoke/i
 };
 
-const REF_PATTERN = /\]\(\s*<([^>\r\n]+)>\s*\)|(?:\]\(|(?:file|path|script|fixture|template|asset)s?\s*[:=-]\s*|`)(\.{1,2}\/[^`)`\s]+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_./-]+)(?:\)|`)?/gi;
+const REF_PATTERN = /(?:(?:file|path|script|fixture|template|asset)s?\s*[:=-]\s*|`)(\.{1,2}\/[^`)`\s]+|[A-Za-z0-9_.-]+\/[A-Za-z0-9_./-]+)(?:`)?/gi;
 const IGNORED_DIRECTORIES = new Set([".git", "node_modules"]);
 
 export function findSkillFiles(inputs) {
@@ -86,8 +86,14 @@ function detectContracts(sections, text) {
 
 function extractReferences(text, file) {
   const refs = [];
+  const matches = [...extractMarkdownDestinations(text)];
   for (const match of text.matchAll(REF_PATTERN)) {
-    const value = cleanReference(match[1] ?? match[2]);
+    matches.push({ index: match.index, value: match[1] });
+  }
+  matches.sort((left, right) => left.index - right.index);
+
+  for (const match of matches) {
+    const value = cleanReference(match.value);
     if (!value || shouldIgnore(value)) continue;
     const line = text.slice(0, match.index).split(/\r?\n/).length;
     const resolved = path.resolve(path.dirname(file), normalizeDestination(value));
@@ -99,6 +105,68 @@ function extractReferences(text, file) {
     });
   }
   return uniqueRefs(refs);
+}
+
+function extractMarkdownDestinations(text) {
+  const destinations = [];
+  let searchFrom = 0;
+
+  while (searchFrom < text.length) {
+    const index = text.indexOf("](", searchFrom);
+    if (index === -1) break;
+    let cursor = index + 2;
+    while (cursor < text.length && /[ \t]/.test(text[cursor])) cursor += 1;
+
+    const parsed = text[cursor] === "<"
+      ? readAngleDestination(text, cursor)
+      : readUnbracketedDestination(text, cursor);
+    if (parsed) destinations.push({ index, value: parsed.value });
+    searchFrom = parsed?.end ?? index + 2;
+  }
+
+  return destinations;
+}
+
+function readAngleDestination(text, start) {
+  const end = text.indexOf(">", start + 1);
+  if (end === -1 || /[\r\n]/.test(text.slice(start + 1, end))) return null;
+  let cursor = end + 1;
+  while (cursor < text.length && /[ \t]/.test(text[cursor])) cursor += 1;
+  if (text[cursor] !== ")") return null;
+  return { value: text.slice(start + 1, end), end: cursor + 1 };
+}
+
+function readUnbracketedDestination(text, start) {
+  let cursor = start;
+  let depth = 0;
+  let value = "";
+
+  while (cursor < text.length) {
+    const character = text[cursor];
+    if (character === "\\" && cursor + 1 < text.length) {
+      const escaped = text[cursor + 1];
+      value += /[!-/:-@[-`{-~]/.test(escaped) ? escaped : character + escaped;
+      cursor += 2;
+      continue;
+    }
+    if (character === "(") {
+      depth += 1;
+      value += character;
+      cursor += 1;
+      continue;
+    }
+    if (character === ")") {
+      if (depth === 0) return value ? { value, end: cursor + 1 } : null;
+      depth -= 1;
+      value += character;
+      cursor += 1;
+      continue;
+    }
+    if (/\s/.test(character)) return null;
+    value += character;
+    cursor += 1;
+  }
+  return null;
 }
 
 function normalizeDestination(value) {

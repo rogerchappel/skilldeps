@@ -29,6 +29,8 @@ file to audit only that file.
   `[guide](<references/setup guide.md>)`.
 - Local Markdown destinations with percent-encoded characters, fragments, or
   query strings, such as `[guide](<references/setup%20guide.md#install>)`.
+- Unbracketed Markdown destinations with balanced or escaped parentheses, such
+  as `[guide](references/setup(v2).md)` or `[guide](references/setup\(v2\).md)`.
 - Missing referenced files.
 - Mutating or external-action language without an approval section.
 
@@ -48,10 +50,11 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 
 - Markdown parsing is intentionally lightweight. Standard local inline-link
   destinations are supported, including angle brackets when a path contains
-  spaces. Percent escapes are decoded and fragment or query suffixes are
-  ignored for filesystem checks, while reports retain the destination as
-  written. Malformed percent escapes are checked literally; reference-style
-  links and escaped closing angle brackets are not supported.
+  spaces and unbracketed destinations with balanced or escaped parentheses.
+  Backslash-escaped punctuation is unescaped, percent escapes are decoded, and
+  fragment or query suffixes are ignored for filesystem checks. Malformed
+  percent escapes are checked literally; reference-style links and escaped
+  closing angle brackets are not supported.
 - It also detects common backtick and prose relative-reference patterns, not
   every possible prose reference.
 - It reports contract presence, not whether the prose is high quality.

@@ -99,3 +99,31 @@ test("cli accepts normalized local destinations and preserves their spelling", (
     ]
   );
 });
+
+test("cli accepts an existing balanced-parentheses Markdown destination", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-parentheses-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(skill, "references"));
+  fs.writeFileSync(path.join(skill, "references/guide(v2).md"), "# Present");
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    [
+      "# parenthesized link",
+      "## Usage",
+      "## Tools",
+      "## Side effects",
+      "## Validation",
+      "[guide](references/guide(v2).md)"
+    ].join("\n")
+  );
+
+  const c = capture();
+  const code = run([skill, "--format", "json"], c.io);
+  const payload = JSON.parse(c.output().stdout);
+
+  assert.equal(code, 0);
+  assert.deepEqual(
+    payload.results[0].references.map(({ value, exists }) => ({ value, exists })),
+    [{ value: "references/guide(v2).md", exists: true }]
+  );
+});
