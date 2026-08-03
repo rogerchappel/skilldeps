@@ -5,7 +5,7 @@
 ## Quickstart
 
 ```bash
-npm install
+npm ci
 npm test
 node bin/skilldeps.js fixtures/complete-skill --format markdown
 ```
@@ -63,8 +63,9 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 ## Verification
 
 ```bash
-npm test
+npm ci
 npm run check
+npm test
 npm run smoke
 npm run package:smoke
 ```

@@ -16,7 +16,9 @@ The analyzer only reads files under the supplied paths. It does not execute scri
 
 ```bash
 npm ci
+npm run check
 npm test
 npm run smoke
+npm run package:smoke
 node bin/skilldeps.js ./skills --fail-on warning
 ```
