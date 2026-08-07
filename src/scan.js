@@ -130,10 +130,8 @@ function extractMarkdownDestinations(text) {
 function readAngleDestination(text, start) {
   const end = text.indexOf(">", start + 1);
   if (end === -1 || /[\r\n]/.test(text.slice(start + 1, end))) return null;
-  let cursor = end + 1;
-  while (cursor < text.length && /[ \t]/.test(text[cursor])) cursor += 1;
-  if (text[cursor] !== ")") return null;
-  return { value: text.slice(start + 1, end), end: cursor + 1 };
+  const close = readTitleAndClose(text, end + 1);
+  return close && { value: text.slice(start + 1, end), end: close };
 }
 
 function readUnbracketedDestination(text, start) {
@@ -162,8 +160,39 @@ function readUnbracketedDestination(text, start) {
       cursor += 1;
       continue;
     }
+    if (/[ \t]/.test(character) && depth === 0) {
+      const close = readTitleAndClose(text, cursor);
+      return value && close ? { value, end: close } : null;
+    }
     if (/\s/.test(character)) return null;
     value += character;
+    cursor += 1;
+  }
+  return null;
+}
+
+function readTitleAndClose(text, start) {
+  let cursor = start;
+  while (cursor < text.length && /[ \t]/.test(text[cursor])) cursor += 1;
+  if (text[cursor] === ")") return cursor + 1;
+  if (cursor === start) return null;
+
+  const opener = text[cursor];
+  const closer = opener === "(" ? ")" : opener;
+  if (!['"', "'", "("].includes(opener)) return null;
+  cursor += 1;
+
+  while (cursor < text.length) {
+    if (/[\r\n]/.test(text[cursor])) return null;
+    if (text[cursor] === "\\" && cursor + 1 < text.length) {
+      cursor += 2;
+      continue;
+    }
+    if (text[cursor] === closer) {
+      cursor += 1;
+      while (cursor < text.length && /[ \t]/.test(text[cursor])) cursor += 1;
+      return text[cursor] === ")" ? cursor + 1 : null;
+    }
     cursor += 1;
   }
   return null;
