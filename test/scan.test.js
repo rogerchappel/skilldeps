@@ -153,6 +153,37 @@ test("reports a missing balanced-parentheses destination on the source line", (t
   assert.equal(finding?.line, 3);
 });
 
+test("resolves titled local Markdown destinations without including the title", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-titles-present-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(skill, "references"));
+  fs.writeFileSync(path.join(skill, "references/guide.md"), "# Present");
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    [
+      "# titled links",
+      "",
+      '[double](references/guide.md "Setup guide")',
+      "[single](references/guide.md 'Setup guide')",
+      "[parenthesized](references/guide.md (Setup guide))",
+      '[angle double](<references/guide.md> "Setup guide")',
+      "[angle single](<references/guide.md> 'Setup guide')",
+      "[angle parenthesized](<references/guide.md> (Setup guide))"
+    ].join("\n")
+  );
+
+  assert.deepEqual(
+    parseSkillFile(path.join(skill, "SKILL.md")).references.map(
+      ({ value, line, exists }) => ({ value, line, exists })
+    ),
+    [3, 4, 5, 6, 7, 8].map((line) => ({
+      value: "references/guide.md",
+      line,
+      exists: true
+    }))
+  );
+});
+
 test("ignores external angle-bracket Markdown destinations", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-external-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));

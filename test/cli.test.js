@@ -127,3 +127,32 @@ test("cli accepts an existing balanced-parentheses Markdown destination", (t) =>
     [{ value: "references/guide(v2).md", exists: true }]
   );
 });
+
+for (const [label, destination] of [
+  ["unbracketed double-quoted", 'references/missing.md "Setup guide"'],
+  ["unbracketed single-quoted", "references/missing.md 'Setup guide'"],
+  ["unbracketed parenthesized", "references/missing.md (Setup guide)"],
+  ["angle double-quoted", '<references/missing.md> "Setup guide"'],
+  ["angle single-quoted", "<references/missing.md> 'Setup guide'"],
+  ["angle parenthesized", "<references/missing.md> (Setup guide)"]
+]) {
+  test(`cli reports a missing destination with a ${label} title`, (t) => {
+    const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-title-"));
+    t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+    fs.writeFileSync(
+      path.join(skill, "SKILL.md"),
+      `# titled link\n\nSee [missing guide](${destination}).\n`
+    );
+
+    const c = capture();
+    const code = run([skill, "--format", "json"], c.io);
+    const payload = JSON.parse(c.output().stdout);
+    const finding = payload.results[0].findings.find(
+      (candidate) => candidate.code === "missing-reference"
+    );
+
+    assert.equal(code, 1);
+    assert.equal(finding?.reference, "references/missing.md");
+    assert.equal(finding?.line, 3);
+  });
+}
