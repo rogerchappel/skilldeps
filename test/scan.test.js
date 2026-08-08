@@ -74,6 +74,35 @@ test("incomplete fixture reports missing contracts and references", () => {
   assert.ok(result.findings.some((finding) => finding.code === "approval-boundary-missing"));
 });
 
+test("ignores references inside backtick and tilde fenced code", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-fences-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "real.md"), "# Present\n");
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Fenced references",
+    "````md",
+    "[backtick link](missing-backtick.md)",
+    "```",
+    "path: examples/still-inside.md",
+    "````",
+    "~~~~",
+    "`fixtures/missing-tilde.md`",
+    "~~~",
+    "[also ignored](missing-after-short-closer.md)",
+    "~~~~ not a closing fence",
+    "script: scripts/still-inside.js",
+    "~~~~",
+    "[real](real.md)",
+    ""
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, line, exists }) => ({ value, line, exists })),
+    [{ value: "real.md", line: 14, exists: true }]
+  );
+});
+
 test("resolves angle-bracket Markdown destinations containing spaces", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-present-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
