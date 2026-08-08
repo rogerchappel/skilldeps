@@ -86,8 +86,9 @@ function detectContracts(sections, text) {
 
 function extractReferences(text, file) {
   const refs = [];
-  const matches = [...extractMarkdownDestinations(text)];
-  for (const match of text.matchAll(REF_PATTERN)) {
+  const searchableText = maskFencedCode(text);
+  const matches = [...extractMarkdownDestinations(searchableText)];
+  for (const match of searchableText.matchAll(REF_PATTERN)) {
     matches.push({ index: match.index, value: match[1] });
   }
   matches.sort((left, right) => left.index - right.index);
@@ -105,6 +106,27 @@ function extractReferences(text, file) {
     });
   }
   return uniqueRefs(refs);
+}
+
+function maskFencedCode(text) {
+  const lines = text.split(/(?<=\n)/);
+  let fence = null;
+
+  return lines.map((line) => {
+    const content = line.replace(/\r?\n$/, "");
+    if (!fence) {
+      const opener = content.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+      if (!opener || (opener[1][0] === "`" && opener[2].includes("`"))) return line;
+      fence = { marker: opener[1][0], length: opener[1].length };
+      return line.replace(/[^\r\n]/g, " ");
+    }
+
+    const marker = fence.marker === "`" ? "`" : "~";
+    const closer = new RegExp(`^ {0,3}${marker}{${fence.length},}[ \\t]*$`);
+    const masked = line.replace(/[^\r\n]/g, " ");
+    if (closer.test(content)) fence = null;
+    return masked;
+  }).join("");
 }
 
 function extractMarkdownDestinations(text) {
