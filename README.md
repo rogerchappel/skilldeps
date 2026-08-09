@@ -16,6 +16,10 @@ Audit a skill pack:
 skilldeps ./skills --format json --fail-on warning
 ```
 
+The supported options are `--format markdown|json`,
+`--fail-on info|warning|error`, and `--help` (`-h`). Unsupported options are
+reported as usage errors with exit code `2`; they are never treated as paths.
+
 Directory inputs are searched recursively, including packs that contain both a
 root `SKILL.md` and nested skills. Discovery skips `.git` and `node_modules`
 directories and does not follow directory symlinks. Pass a specific `SKILL.md`
