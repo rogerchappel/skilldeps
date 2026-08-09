@@ -39,6 +39,34 @@ test("cli validates format", () => {
   assert.match(c.output().stderr, /Unsupported format/);
 });
 
+test("cli rejects an unsupported option", () => {
+  const c = capture();
+  const code = run(["--bogus"], c.io);
+  assert.equal(code, 2);
+  assert.equal(c.output().stdout, "");
+  assert.equal(c.output().stderr, "Unsupported option: --bogus\n");
+});
+
+test("cli rejects an unsupported option mixed with a valid path", () => {
+  const c = capture();
+  const code = run(["fixtures/complete-skill", "--bogus"], c.io);
+  assert.equal(code, 2);
+  assert.equal(c.output().stdout, "");
+  assert.equal(c.output().stderr, "Unsupported option: --bogus\n");
+});
+
+test("cli accepts the documented format and fail-on options", () => {
+  const c = capture();
+  const code = run([
+    "--format", "json",
+    "fixtures/complete-skill",
+    "--fail-on", "warning"
+  ], c.io);
+  assert.equal(code, 0);
+  assert.equal(JSON.parse(c.output().stdout).summary.status, "pass");
+  assert.equal(c.output().stderr, "");
+});
+
 test("cli fails for a missing angle-bracket Markdown destination", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-angle-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
