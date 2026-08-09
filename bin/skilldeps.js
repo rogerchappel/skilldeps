@@ -9,13 +9,15 @@ function parseArgs(argv) {
   const args = {
     paths: [],
     format: "markdown",
-    failOn: "error"
+    failOn: "error",
+    unsupportedOption: null
   };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
     if (value === "--format") args.format = argv[++index];
     else if (value === "--fail-on") args.failOn = argv[++index];
     else if (value === "--help" || value === "-h") args.help = true;
+    else if (value.startsWith("-")) args.unsupportedOption ??= value;
     else args.paths.push(value);
   }
   return args;
@@ -30,6 +32,10 @@ Audit agent SKILL.md files for missing references and weak contracts.
 
 export function run(argv = process.argv.slice(2), io = process) {
   const args = parseArgs(argv);
+  if (args.unsupportedOption) {
+    io.stderr.write(`Unsupported option: ${args.unsupportedOption}\n`);
+    return 2;
+  }
   if (args.help || args.paths.length === 0) {
     io.stdout.write(usage());
     return 0;
