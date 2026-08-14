@@ -37,6 +37,9 @@ file to audit only that file.
   as `[guide](references/setup(v2).md)` or `[guide](references/setup\(v2\).md)`.
 - Optional double-quoted, single-quoted, or parenthesized titles after local
   destinations, such as `[guide](references/setup.md "Setup instructions")`.
+- Markdown destinations beginning with an RFC-style URI scheme, such as
+  `https:`, `mailto:`, `tel:`, or a custom `web+skill:` scheme, are treated as
+  external and are not checked against the local filesystem.
 - Missing referenced files.
 - Mutating or external-action language without an approval section.
 
@@ -62,7 +65,9 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
   Backslash-escaped punctuation is unescaped, percent escapes are decoded, and
   fragment or query suffixes are ignored for filesystem checks. Malformed
   percent escapes are checked literally; reference-style links and escaped
-  closing angle brackets are not supported.
+  closing angle brackets are not supported. A destination whose prefix matches
+  `[A-Za-z][A-Za-z0-9+.-]*:` is considered an external URI; the URI itself is
+  not fetched or validated.
 - It also detects common backtick and prose relative-reference patterns, not
   every possible prose reference.
 - It reports contract presence, not whether the prose is high quality.
