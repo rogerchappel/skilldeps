@@ -103,6 +103,76 @@ test("ignores references inside backtick and tilde fenced code", (t) => {
   );
 });
 
+test("ignores operational contracts declared only inside fenced examples", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-fenced-contracts-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Fenced contracts",
+    "",
+    "```md",
+    "## Required tools",
+    "Use this skill when an agent needs an example.",
+    "## Approval requirements",
+    "Ask before publishing.",
+    "```",
+    "",
+    "~~~md",
+    "## Validation",
+    "## Side effects",
+    "~~~",
+    ""
+  ].join("\n"));
+
+  const result = analyzeSkill(parseSkillFile(path.join(skill, "SKILL.md")));
+  assert.equal(result.contracts.usage, false);
+  assert.equal(result.contracts.tools, false);
+  assert.equal(result.contracts.approvals, false);
+  assert.equal(result.contracts.validation, false);
+  assert.equal(result.contracts.sideEffects, false);
+  assert.ok(result.findings.some(({ code }) => code === "missing-usage"));
+  assert.ok(result.findings.some(({ code }) => code === "missing-tools"));
+  assert.ok(result.findings.some(({ code }) => code === "missing-validation"));
+  assert.ok(result.findings.some(({ code }) => code === "missing-sideEffects"));
+});
+
+test("ignores action words inside fenced examples", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-fenced-actions-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Fenced actions",
+    "",
+    "```sh",
+    "publish release",
+    "send update",
+    "delete deployment",
+    "```",
+    ""
+  ].join("\n"));
+
+  const result = analyzeSkill(parseSkillFile(path.join(skill, "SKILL.md")));
+  assert.ok(!result.findings.some(({ code }) => code === "approval-boundary-missing"));
+});
+
+test("prose action words still require a prose approval contract", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-prose-actions-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Prose actions",
+    "",
+    "Publish the generated report.",
+    "",
+    "```md",
+    "## Approval requirements",
+    "Ask before publishing.",
+    "```",
+    ""
+  ].join("\n"));
+
+  const result = analyzeSkill(parseSkillFile(path.join(skill, "SKILL.md")));
+  assert.equal(result.contracts.approvals, false);
+  assert.ok(result.findings.some(({ code }) => code === "approval-boundary-missing"));
+});
+
 test("resolves angle-bracket Markdown destinations containing spaces", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-angle-present-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
