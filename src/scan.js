@@ -48,10 +48,12 @@ function findSkillsInDirectory(directory, found) {
 export function parseSkillFile(file) {
   const text = fs.readFileSync(file, "utf8");
   const lines = text.split(/\r?\n/);
+  const semanticText = maskFencedCode(text);
+  const semanticLines = semanticText.split(/\r?\n/);
   const sections = {};
   let current = "preamble";
 
-  lines.forEach((line, index) => {
+  semanticLines.forEach((line, index) => {
     const heading = line.match(/^#{1,4}\s+(.+?)\s*$/);
     if (heading) current = heading[1].trim();
     sections[current] ??= [];
@@ -63,10 +65,11 @@ export function parseSkillFile(file) {
     root: path.dirname(file),
     title: extractTitle(lines) ?? path.basename(path.dirname(file)),
     text,
+    semanticText,
     lines,
     sections,
-    contracts: detectContracts(sections, text),
-    references: extractReferences(text, file)
+    contracts: detectContracts(sections, semanticText),
+    references: extractReferences(semanticText, file)
   };
 }
 
@@ -86,9 +89,8 @@ function detectContracts(sections, text) {
 
 function extractReferences(text, file) {
   const refs = [];
-  const searchableText = maskFencedCode(text);
-  const matches = [...extractMarkdownDestinations(searchableText)];
-  for (const match of searchableText.matchAll(REF_PATTERN)) {
+  const matches = [...extractMarkdownDestinations(text)];
+  for (const match of text.matchAll(REF_PATTERN)) {
     matches.push({ index: match.index, value: match[1] });
   }
   matches.sort((left, right) => left.index - right.index);
