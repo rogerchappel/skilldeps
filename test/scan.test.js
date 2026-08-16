@@ -294,6 +294,33 @@ test("ignores external angle-bracket Markdown destinations", (t) => {
   assert.deepEqual(parseSkillFile(path.join(skill, "SKILL.md")).references, []);
 });
 
+test("ignores RFC-style URI-scheme destinations while checking relative links", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-uri-schemes-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+
+  fs.writeFileSync(
+    path.join(skill, "SKILL.md"),
+    [
+      "# URI schemes",
+      "",
+      "[email](mailto:maintainer@example.com)",
+      "[phone](tel:+61700000000)",
+      "[custom](web+skill:open)",
+      "[missing](references/missing.md)"
+    ].join("\n")
+  );
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, line, exists }) => ({ value, line, exists })),
+    [{ value: "references/missing.md", line: 6, exists: false }]
+  );
+  assert.equal(
+    analyzeSkill(parsed).findings.filter(({ code }) => code === "missing-reference").length,
+    1
+  );
+});
+
 test("normalizes local Markdown destinations for filesystem checks", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-normalized-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));

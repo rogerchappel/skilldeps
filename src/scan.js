@@ -237,7 +237,7 @@ function cleanReference(value) {
 }
 
 function shouldIgnore(value) {
-  return /^https?:/i.test(value) || value.includes("://") || value.startsWith("#");
+  return /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("#");
 }
 
 function uniqueRefs(refs) {
