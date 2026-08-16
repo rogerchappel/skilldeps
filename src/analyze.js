@@ -33,7 +33,7 @@ export function analyzeSkill(parsed) {
     }
   }
 
-  if (/publish|send|delete|deploy|merge|approve|install/i.test(parsed.text) && !parsed.contracts.approvals) {
+  if (/publish|send|delete|deploy|merge|approve|install/i.test(parsed.semanticText) && !parsed.contracts.approvals) {
     findings.push({
       severity: "warning",
       code: "approval-boundary-missing",
