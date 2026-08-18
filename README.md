@@ -28,6 +28,8 @@ file to audit only that file.
 ## What It Checks
 
 - Required usage, tools, side-effect, approval, example, and validation sections.
+- Contract headings may use standard ATX levels 1 through 6; heading-like text
+  inside fenced code examples is ignored.
 - Relative references such as `scripts/check.js`, `fixtures/sample.md`, and
   Markdown links with angle-bracket destinations such as
   `[guide](<references/setup guide.md>)`.
