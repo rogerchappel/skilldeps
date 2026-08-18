@@ -54,8 +54,11 @@ export function parseSkillFile(file) {
   let current = "preamble";
 
   semanticLines.forEach((line, index) => {
-    const heading = line.match(/^#{1,4}\s+(.+?)\s*$/);
-    if (heading) current = heading[1].trim();
+    const heading = line.match(/^ {0,3}#{1,6}(?:[ \t]+|$)(.*)$/);
+    if (heading) {
+      const title = heading[1].replace(/[ \t]+#+[ \t]*$/, "").trim();
+      if (title) current = title;
+    }
     sections[current] ??= [];
     sections[current].push({ number: index + 1, text: line });
   });
