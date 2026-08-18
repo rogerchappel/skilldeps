@@ -74,6 +74,43 @@ test("incomplete fixture reports missing contracts and references", () => {
   assert.ok(result.findings.some((finding) => finding.code === "approval-boundary-missing"));
 });
 
+test("recognizes level-five and level-six contract headings", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-headings-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Deep contracts",
+    "##### Required tools #####",
+    "- node",
+    "###### Side-effect boundaries",
+    "- Read-only",
+    "##### Validation",
+    "- Run tests"
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.equal(parsed.contracts.tools, true);
+  assert.equal(parsed.contracts.sideEffects, true);
+  assert.equal(parsed.contracts.validation, true);
+});
+
+test("ignores deep contract headings inside fenced examples", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-deep-fences-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Fenced examples",
+    "```markdown",
+    "##### Required tools",
+    "```",
+    "~~~markdown",
+    "###### Validation",
+    "~~~~"
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.equal(parsed.contracts.tools, false);
+  assert.equal(parsed.contracts.validation, false);
+});
+
 test("ignores references inside backtick and tilde fenced code", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-fences-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
