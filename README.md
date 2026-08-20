@@ -19,6 +19,8 @@ skilldeps ./skills --format json --fail-on warning
 The supported options are `--format markdown|json`,
 `--fail-on info|warning|error`, and `--help` (`-h`). Unsupported options are
 reported as usage errors with exit code `2`; they are never treated as paths.
+Both `--format` and `--fail-on` require a value. Omitting one, including by
+placing another option immediately after it, reports a usage error and exits `2`.
 
 Directory inputs are searched recursively, including packs that contain both a
 root `SKILL.md` and nested skills. Discovery skips `.git` and `node_modules`

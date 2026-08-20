@@ -10,12 +10,21 @@ function parseArgs(argv) {
     paths: [],
     format: "markdown",
     failOn: "error",
+    missingOptionValue: null,
     unsupportedOption: null
   };
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
-    if (value === "--format") args.format = argv[++index];
-    else if (value === "--fail-on") args.failOn = argv[++index];
+    if (value === "--format" || value === "--fail-on") {
+      const optionValue = argv[index + 1];
+      if (optionValue === undefined || optionValue.startsWith("-")) {
+        args.missingOptionValue ??= value;
+      } else {
+        index += 1;
+        if (value === "--format") args.format = optionValue;
+        else args.failOn = optionValue;
+      }
+    }
     else if (value === "--help" || value === "-h") args.help = true;
     else if (value.startsWith("-")) args.unsupportedOption ??= value;
     else args.paths.push(value);
@@ -32,6 +41,10 @@ Audit agent SKILL.md files for missing references and weak contracts.
 
 export function run(argv = process.argv.slice(2), io = process) {
   const args = parseArgs(argv);
+  if (args.missingOptionValue) {
+    io.stderr.write(`Option requires a value: ${args.missingOptionValue}\n`);
+    return 2;
+  }
   if (args.unsupportedOption) {
     io.stderr.write(`Unsupported option: ${args.unsupportedOption}\n`);
     return 2;

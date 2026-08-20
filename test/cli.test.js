@@ -2,8 +2,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { run } from "../bin/skilldeps.js";
+
+const cliPath = fileURLToPath(new URL("../bin/skilldeps.js", import.meta.url));
+const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 
 function capture() {
   let stdout = "";
@@ -66,6 +71,33 @@ test("cli accepts the documented format and fail-on options", () => {
   assert.equal(JSON.parse(c.output().stdout).summary.status, "pass");
   assert.equal(c.output().stderr, "");
 });
+
+for (const option of ["--format", "--fail-on"]) {
+  for (const [scenario, argv] of [
+    ["at the end of argv", ["fixtures/complete-skill", option]],
+    ["before another option", ["fixtures/complete-skill", option, "--help"]]
+  ]) {
+    test(`run rejects ${option} without a value ${scenario}`, () => {
+      const c = capture();
+      const code = run(argv, c.io);
+
+      assert.equal(code, 2);
+      assert.equal(c.output().stdout, "");
+      assert.equal(c.output().stderr, `Option requires a value: ${option}\n`);
+    });
+
+    test(`executable rejects ${option} without a value ${scenario}`, () => {
+      const result = spawnSync(process.execPath, [cliPath, ...argv], {
+        cwd: projectRoot,
+        encoding: "utf8"
+      });
+
+      assert.equal(result.status, 2);
+      assert.equal(result.stdout, "");
+      assert.equal(result.stderr, `Option requires a value: ${option}\n`);
+    });
+  }
+}
 
 test("cli fails for a missing angle-bracket Markdown destination", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-angle-"));
