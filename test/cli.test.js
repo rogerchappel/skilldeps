@@ -44,6 +44,22 @@ test("cli validates format", () => {
   assert.match(c.output().stderr, /Unsupported format/);
 });
 
+test("cli fails on a missing shortcut-reference destination", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-reference-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# CLI reference fixture",
+    "See [guide].",
+    "[guide]: ./missing.md"
+  ].join("\n"));
+
+  const c = capture();
+  const code = run([root, "--format", "json"], c.io);
+  const payload = JSON.parse(c.output().stdout);
+  assert.equal(code, 1);
+  assert.ok(payload.results[0].findings.some(({ code: findingCode, line }) => findingCode === "missing-reference" && line === 3));
+});
+
 test("cli rejects an unsupported option", () => {
   const c = capture();
   const code = run(["--bogus"], c.io);
