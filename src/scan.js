@@ -92,7 +92,10 @@ function detectContracts(sections, text) {
 
 function extractReferences(text, file) {
   const refs = [];
-  const matches = [...extractMarkdownDestinations(text)];
+  const matches = [
+    ...extractMarkdownDestinations(text),
+    ...extractReferenceDestinations(text)
+  ];
   for (const match of text.matchAll(REF_PATTERN)) {
     matches.push({ index: match.index, value: match[1] });
   }
@@ -111,6 +114,36 @@ function extractReferences(text, file) {
     });
   }
   return uniqueRefs(refs);
+}
+
+function extractReferenceDestinations(text) {
+  const definitions = new Map();
+  const definitionRanges = [];
+  const definitionPattern = /^ {0,3}\[([^\]]+)\]:[ \t]*(?:<([^>\r\n]+)>|([^\s]+))(?:[ \t]+(?:"[^"]*"|'[^']*'|\([^)]*\)))?[ \t]*$/gm;
+
+  for (const match of text.matchAll(definitionPattern)) {
+    const label = normalizeLabel(match[1]);
+    if (!label || definitions.has(label)) continue;
+    definitions.set(label, { index: match.index, value: match[2] ?? match[3] });
+    definitionRanges.push([match.index, match.index + match[0].length]);
+  }
+
+  const used = new Set();
+  const usagePattern = /(?<!!)\[([^\]\r\n]+)\](?:\[([^\]\r\n]*)\])?/g;
+  for (const match of text.matchAll(usagePattern)) {
+    if (definitionRanges.some(([start, end]) => match.index >= start && match.index < end)) continue;
+    if (text[match.index + match[0].length] === "(") continue;
+    const label = normalizeLabel(match[2] || match[1]);
+    if (label) used.add(label);
+  }
+
+  return [...used]
+    .map((label) => definitions.get(label))
+    .filter(Boolean);
+}
+
+function normalizeLabel(label) {
+  return label.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 function maskFencedCode(text) {
