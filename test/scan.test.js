@@ -74,6 +74,63 @@ test("incomplete fixture reports missing contracts and references", () => {
   assert.ok(result.findings.some((finding) => finding.code === "approval-boundary-missing"));
 });
 
+test("resolves full, collapsed, and shortcut Markdown references", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-references-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "guide.md"), "# Guide\n");
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# Reference fixture",
+    "",
+    "Read [the guide][Guide Label], [Guide Label][], and [guide label].",
+    "",
+    "[  GUIDE   label  ]: <./guide.md> \"Optional title\""
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(root, "SKILL.md"));
+  assert.deepEqual(parsed.references.map(({ value, line, exists }) => ({ value, line, exists })), [
+    { value: "./guide.md", line: 5, exists: true }
+  ]);
+});
+
+test("reports missing reference definitions at their exact source line", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-missing-reference-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# Missing reference fixture",
+    "",
+    "See [missing guide][guide].",
+    "",
+    "[guide]: ./missing.md 'Optional title'"
+  ].join("\n"));
+
+  const result = analyzeSkill(parseSkillFile(path.join(root, "SKILL.md")));
+  const finding = result.findings.find(({ code }) => code === "missing-reference");
+  assert.equal(finding?.line, 5);
+  assert.equal(finding?.message, "Referenced path does not exist: ./missing.md");
+});
+
+test("ignores external, fragment, unused, and fenced reference definitions", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-ignored-references-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# Ignored reference fixture",
+    "",
+    "See [site], [section], and [inline](./real-inline.md).",
+    "",
+    "[site]: https://example.com/docs",
+    "[section]: #details",
+    "[unused]: ./not-used.md",
+    "",
+    "```md",
+    "[fenced]: ./also-not-used.md",
+    "See [fenced].",
+    "```"
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(root, "SKILL.md"));
+  assert.deepEqual(parsed.references.map(({ value }) => value), ["./real-inline.md"]);
+});
+
 test("recognizes level-five and level-six contract headings", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-headings-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
