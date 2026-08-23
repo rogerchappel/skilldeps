@@ -41,6 +41,10 @@ file to audit only that file.
   as `[guide](references/setup(v2).md)` or `[guide](references/setup\(v2\).md)`.
 - Optional double-quoted, single-quoted, or parenthesized titles after local
   destinations, such as `[guide](references/setup.md "Setup instructions")`.
+- CommonMark full (`[guide][docs]`), collapsed (`[docs][]`), and shortcut
+  (`[docs]`) reference links whose definitions point to local files. Labels are
+  matched case-insensitively with whitespace normalized, and definition titles
+  are supported.
 - Markdown destinations beginning with an RFC-style URI scheme, such as
   `https:`, `mailto:`, `tel:`, or a custom `web+skill:` scheme, are treated as
   external and are not checked against the local filesystem.
@@ -71,8 +75,10 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
   optional titles wrapped in double quotes, single quotes, or parentheses.
   Backslash-escaped punctuation is unescaped, percent escapes are decoded, and
   fragment or query suffixes are ignored for filesystem checks. Malformed
-  percent escapes are checked literally; reference-style links and escaped
-  closing angle brackets are not supported. A destination whose prefix matches
+  percent escapes are checked literally. Full, collapsed, and shortcut
+  reference-style links are supported; unused, external, and fragment-only
+  definitions are ignored. Escaped closing angle brackets are not supported. A
+  destination whose prefix matches
   `[A-Za-z][A-Za-z0-9+.-]*:` is considered an external URI; the URI itself is
   not fetched or validated.
 - It also detects common backtick and prose relative-reference patterns, not
