@@ -2,4 +2,6 @@
 
 Use this skill to publish something.
 
-See `scripts/missing.js` and `fixtures/example.md`.
+Script: scripts/missing.js
+
+Fixture: fixtures/example.md

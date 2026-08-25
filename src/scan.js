@@ -48,7 +48,7 @@ function findSkillsInDirectory(directory, found) {
 export function parseSkillFile(file) {
   const text = fs.readFileSync(file, "utf8");
   const lines = text.split(/\r?\n/);
-  const semanticText = maskFencedCode(text);
+  const semanticText = maskCodeContexts(text);
   const semanticLines = semanticText.split(/\r?\n/);
   const sections = {};
   let current = "preamble";
@@ -144,6 +144,54 @@ function extractReferenceDestinations(text) {
 
 function normalizeLabel(label) {
   return label.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function maskCodeContexts(text) {
+  return maskInlineCode(maskIndentedCode(maskFencedCode(text)));
+}
+
+function maskIndentedCode(text) {
+  return text
+    .split(/(?<=\n)/)
+    .map((line) => /^(?: {4}|\t)/.test(line)
+      ? line.replace(/[^\r\n]/g, " ")
+      : line)
+    .join("");
+}
+
+function maskInlineCode(text) {
+  const masked = [...text];
+  let cursor = 0;
+
+  while (cursor < text.length) {
+    if (text[cursor] !== "`") {
+      cursor += 1;
+      continue;
+    }
+
+    let length = 1;
+    while (text[cursor + length] === "`") length += 1;
+    const delimiter = "`".repeat(length);
+    let closer = text.indexOf(delimiter, cursor + length);
+    while (
+      closer !== -1 &&
+      (text[closer - 1] === "`" || text[closer + length] === "`")
+    ) {
+      closer = text.indexOf(delimiter, closer + length + 1);
+    }
+    if (closer === -1) {
+      cursor += length;
+      continue;
+    }
+
+    const end = closer + length;
+    for (let index = cursor; index < end; index += 1) {
+      if (text[index] !== "\n" && text[index] !== "\r") masked[index] = " ";
+    }
+    cursor = end;
+  }
+
+  return masked.join("");
 }
 
 function maskFencedCode(text) {

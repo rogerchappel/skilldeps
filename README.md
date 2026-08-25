@@ -65,10 +65,11 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 
 ## Limitations
 
-- Content inside valid backtick or tilde fenced code blocks is treated as an
-  example: headings and usage phrases do not satisfy operational contracts,
-  action words do not require approval declarations, and references are not
-  checked.
+- Content inside inline code spans, four-space or tab-indented code blocks, and
+  valid backtick or tilde fenced code blocks is treated as an example: headings
+  and usage phrases do not satisfy operational contracts, action words do not
+  require approval declarations, and references are not checked. Adjacent
+  prose remains eligible for contract and reference detection.
 - Markdown parsing is intentionally lightweight. Standard local inline-link
   destinations are supported, including angle brackets when a path contains
   spaces, unbracketed destinations with balanced or escaped parentheses, and

@@ -197,6 +197,33 @@ test("ignores references inside backtick and tilde fenced code", (t) => {
   );
 });
 
+test("ignores inline and indented code references while preserving adjacent prose", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-code-contexts-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "real.md"), "# Present\n");
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# Code context references",
+    "",
+    "Ignore `[inline](references/missing-inline.md)` and ``path: scripts/missing.js``.",
+    "Keep the adjacent [real guide](real.md).",
+    "",
+    "    [indented](fixtures/missing.md)",
+    "    template: templates/missing.md",
+    "",
+    "```md",
+    "[fenced](assets/missing.png)",
+    "```"
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(skill, "SKILL.md"));
+  assert.equal(parsed.semanticText.length, parsed.text.length);
+  assert.equal(parsed.semanticText.split("\n").length, parsed.text.split("\n").length);
+  assert.deepEqual(
+    parsed.references.map(({ value, line, exists }) => ({ value, line, exists })),
+    [{ value: "real.md", line: 4, exists: true }]
+  );
+});
+
 test("ignores operational contracts declared only inside fenced examples", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-fenced-contracts-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));

@@ -21,7 +21,9 @@ Approval is required before sending messages, publishing packages, or mutating r
 
 ## Examples
 
-Run `scripts/check.js` against `fixtures/sample.md`.
+Script: scripts/check.js
+
+Fixture: fixtures/sample.md
 
 ## Validation
 

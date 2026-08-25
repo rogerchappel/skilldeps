@@ -138,6 +138,32 @@ test("cli fails for a missing angle-bracket Markdown destination", (t) => {
   );
 });
 
+test("cli ignores code-context paths but reports an adjacent prose link", (t) => {
+  const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-code-contexts-"));
+  t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(skill, "SKILL.md"), [
+    "# code contexts",
+    "## Usage",
+    "## Tools",
+    "## Side effects",
+    "## Validation",
+    "`[ignored](references/inline-missing.md)`",
+    "    [ignored too](fixtures/indented-missing.md)",
+    "[reported](references/prose-missing.md)"
+  ].join("\n"));
+
+  const c = capture();
+  const code = run([skill, "--format", "json"], c.io);
+  const payload = JSON.parse(c.output().stdout);
+  const missing = payload.results[0].findings.filter(({ code: findingCode }) => findingCode === "missing-reference");
+
+  assert.equal(code, 1);
+  assert.deepEqual(
+    missing.map(({ reference, line }) => ({ reference, line })),
+    [{ reference: "references/prose-missing.md", line: 8 }]
+  );
+});
+
 test("cli accepts normalized local destinations and preserves their spelling", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-normalized-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
