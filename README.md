@@ -16,6 +16,11 @@ Audit a skill pack:
 skilldeps ./skills --format json --fail-on warning
 ```
 
+Every supplied path must exist and be either a `SKILL.md` file or a directory to
+search. A missing path or a different file type is reported on stderr and exits
+with status 2, including when another supplied path is valid. Multiple valid
+paths are audited together.
+
 The supported options are `--format markdown|json`,
 `--fail-on info|warning|error`, and `--help` (`-h`). Unsupported options are
 reported as usage errors with exit code `2`; they are never treated as paths.
