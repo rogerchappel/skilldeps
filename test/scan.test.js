@@ -13,6 +13,20 @@ test("finds direct and nested SKILL.md files", () => {
   assert.ok(files.every((file) => file.endsWith("SKILL.md")));
 });
 
+test("rejects every invalid input", () => {
+  assert.throws(
+    () => findSkillFiles(["does-not-exist", "README.md"]),
+    /Invalid skill inputs:\n- .*does-not-exist: path does not exist\n- .*README\.md: expected a SKILL\.md file/
+  );
+});
+
+test("rejects an invalid input even when another input is valid", () => {
+  assert.throws(
+    () => findSkillFiles(["fixtures/complete-skill", "does-not-exist"]),
+    /does-not-exist: path does not exist/
+  );
+});
+
 test("recursively audits root, child, and grandchild skills", (t) => {
   const pack = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-pack-"));
   t.after(() => fs.rmSync(pack, { recursive: true, force: true }));

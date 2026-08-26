@@ -62,7 +62,13 @@ export function run(argv = process.argv.slice(2), io = process) {
     return 2;
   }
 
-  const files = findSkillFiles(args.paths);
+  let files;
+  try {
+    files = findSkillFiles(args.paths);
+  } catch (error) {
+    io.stderr.write(`${error.message}\n`);
+    return 2;
+  }
   if (files.length === 0) {
     io.stderr.write("No SKILL.md files found.\n");
     return 2;
