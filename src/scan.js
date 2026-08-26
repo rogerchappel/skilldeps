@@ -16,18 +16,29 @@ const IGNORED_DIRECTORIES = new Set([".git", "node_modules"]);
 
 export function findSkillFiles(inputs) {
   const found = [];
+  const invalid = [];
   for (const input of inputs) {
     const absolute = path.resolve(input);
-    if (!fs.existsSync(absolute)) continue;
+    if (!fs.existsSync(absolute)) {
+      invalid.push(`${absolute}: path does not exist`);
+      continue;
+    }
     const stat = fs.statSync(absolute);
     if (stat.isFile() && path.basename(absolute) === "SKILL.md") {
       found.push(absolute);
       continue;
     }
+    if (stat.isFile()) {
+      invalid.push(`${absolute}: expected a SKILL.md file`);
+      continue;
+    }
     if (stat.isDirectory()) {
       findSkillsInDirectory(absolute, found);
+      continue;
     }
+    invalid.push(`${absolute}: expected a file or directory`);
   }
+  if (invalid.length > 0) throw new Error(`Invalid skill inputs:\n- ${invalid.join("\n- ")}`);
   return [...new Set(found)].sort();
 }
 
