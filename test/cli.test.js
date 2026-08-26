@@ -44,6 +44,31 @@ test("cli validates format", () => {
   assert.match(c.output().stderr, /Unsupported format/);
 });
 
+test("cli rejects all invalid inputs with a usage diagnostic", () => {
+  const c = capture();
+  const code = run(["does-not-exist", "README.md"], c.io);
+  assert.equal(code, 2);
+  assert.match(c.output().stderr, /Invalid skill inputs:/);
+  assert.match(c.output().stderr, /does-not-exist: path does not exist/);
+  assert.match(c.output().stderr, /README\.md: expected a SKILL\.md file/);
+});
+
+test("cli rejects mixed valid and invalid inputs", () => {
+  const c = capture();
+  const code = run(["fixtures/complete-skill", "does-not-exist"], c.io);
+  assert.equal(code, 2);
+  assert.equal(c.output().stdout, "");
+  assert.match(c.output().stderr, /does-not-exist: path does not exist/);
+});
+
+test("cli audits multiple paths when every input is valid", () => {
+  const c = capture();
+  const code = run(["fixtures/complete-skill", "fixtures/incomplete-skill", "--format", "json"], c.io);
+  assert.equal(code, 1);
+  assert.equal(JSON.parse(c.output().stdout).summary.skills, 2);
+  assert.equal(c.output().stderr, "");
+});
+
 test("cli fails on a missing shortcut-reference destination", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-reference-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
