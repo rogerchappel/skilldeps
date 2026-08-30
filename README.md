@@ -26,6 +26,9 @@ The supported options are `--format markdown|json`,
 reported as usage errors with exit code `2`; they are never treated as paths.
 Both `--format` and `--fail-on` require a value. Omitting one, including by
 placing another option immediately after it, reports a usage error and exits `2`.
+Unsupported option values also exit `2` even when no path is supplied or
+`--help` is present. A genuinely empty invocation and valid `--help` still print
+help and exit successfully.
 
 Directory inputs are searched recursively, including packs that contain both a
 root `SKILL.md` and nested skills. Discovery skips `.git` and `node_modules`
@@ -34,7 +37,10 @@ file to audit only that file.
 
 ## What It Checks
 
-- Required usage, tools, side-effect, approval, example, and validation sections.
+- Missing usage, tools, side-effect, and validation sections are warning-level
+  findings. Input, approval, and example headings are reported in contract
+  presence data; a missing approval section becomes a warning only when the
+  skill mentions a mutating or external action.
 - Contract headings may use standard ATX levels 1 through 6; heading-like text
   inside fenced code examples is ignored.
 - Relative references such as `scripts/check.js`, `fixtures/sample.md`, and
