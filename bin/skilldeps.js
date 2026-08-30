@@ -49,10 +49,6 @@ export function run(argv = process.argv.slice(2), io = process) {
     io.stderr.write(`Unsupported option: ${args.unsupportedOption}\n`);
     return 2;
   }
-  if (args.help || args.paths.length === 0) {
-    io.stdout.write(usage());
-    return 0;
-  }
   if (!["markdown", "json"].includes(args.format)) {
     io.stderr.write(`Unsupported format: ${args.format}\n`);
     return 2;
@@ -60,6 +56,10 @@ export function run(argv = process.argv.slice(2), io = process) {
   if (!(args.failOn in SEVERITY)) {
     io.stderr.write(`Unsupported severity gate: ${args.failOn}\n`);
     return 2;
+  }
+  if (args.help || args.paths.length === 0) {
+    io.stdout.write(usage());
+    return 0;
   }
 
   let files;
