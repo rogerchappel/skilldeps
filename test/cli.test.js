@@ -44,6 +44,40 @@ test("cli validates format", () => {
   assert.match(c.output().stderr, /Unsupported format/);
 });
 
+for (const [option, value, diagnostic] of [
+  ["--format", "xml", "Unsupported format: xml\n"],
+  ["--fail-on", "bogus", "Unsupported severity gate: bogus\n"]
+]) {
+  test(`run validates ${option} without a path`, () => {
+    const c = capture();
+    const code = run([option, value], c.io);
+
+    assert.equal(code, 2);
+    assert.equal(c.output().stdout, "");
+    assert.equal(c.output().stderr, diagnostic);
+  });
+
+  test(`executable validates ${option} without a path`, () => {
+    const result = spawnSync(process.execPath, [cliPath, option, value], {
+      cwd: projectRoot,
+      encoding: "utf8"
+    });
+
+    assert.equal(result.status, 2);
+    assert.equal(result.stdout, "");
+    assert.equal(result.stderr, diagnostic);
+  });
+}
+
+test("help does not hide an invalid option value", () => {
+  const c = capture();
+  const code = run(["--help", "--format", "xml"], c.io);
+
+  assert.equal(code, 2);
+  assert.equal(c.output().stdout, "");
+  assert.equal(c.output().stderr, "Unsupported format: xml\n");
+});
+
 test("cli rejects all invalid inputs with a usage diagnostic", () => {
   const c = capture();
   const code = run(["does-not-exist", "README.md"], c.io);
