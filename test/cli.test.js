@@ -119,6 +119,30 @@ test("cli fails on a missing shortcut-reference destination", (t) => {
   assert.ok(payload.results[0].findings.some(({ code: findingCode, line }) => findingCode === "missing-reference" && line === 3));
 });
 
+test("cli accepts root-relative Markdown URLs and reports true relative misses", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-cli-root-relative-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# CLI root-relative fixture",
+    "See [site docs](/docs/setup.md) and [reference docs][docs].",
+    "See [missing](./missing.md).",
+    "[docs]: /handbook/start.md"
+  ].join("\n"));
+
+  const c = capture();
+  const code = run([root, "--format", "json"], c.io);
+  const payload = JSON.parse(c.output().stdout);
+  const missing = payload.results[0].findings.filter(
+    ({ code: findingCode }) => findingCode === "missing-reference"
+  );
+
+  assert.equal(code, 1);
+  assert.deepEqual(
+    missing.map(({ line, reference }) => ({ line, reference })),
+    [{ line: 3, reference: "./missing.md" }]
+  );
+});
+
 test("cli rejects an unsupported option", () => {
   const c = capture();
   const code = run(["--bogus"], c.io);

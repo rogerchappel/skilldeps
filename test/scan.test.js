@@ -123,6 +123,29 @@ test("reports missing reference definitions at their exact source line", (t) => 
   assert.equal(finding?.message, "Referenced path does not exist: ./missing.md");
 });
 
+test("ignores root-relative Markdown URLs but checks relative files", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-root-relative-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "present.md"), "# Present\n");
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# Root-relative fixture",
+    "",
+    "See [site docs](/docs/setup.md), [present](./present.md), and [missing](../missing.md).",
+    "See [site reference][docs].",
+    "",
+    "[docs]: /handbook/start.md"
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(root, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, line, exists }) => ({ value, line, exists })),
+    [
+      { value: "./present.md", line: 3, exists: true },
+      { value: "../missing.md", line: 3, exists: false }
+    ]
+  );
+});
+
 test("ignores external, fragment, unused, and fenced reference definitions", (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-ignored-references-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

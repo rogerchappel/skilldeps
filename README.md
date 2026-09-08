@@ -59,6 +59,10 @@ file to audit only that file.
 - Markdown destinations beginning with an RFC-style URI scheme, such as
   `https:`, `mailto:`, `tel:`, or a custom `web+skill:` scheme, are treated as
   external and are not checked against the local filesystem.
+- Root-relative Markdown URL destinations, such as `/docs/setup.md`, are site
+  paths rather than skill-relative files and are not checked against the host
+  filesystem. Paths beginning with `./` or `../`, and bare relative paths,
+  remain checked from the directory containing `SKILL.md`.
 - Missing referenced files.
 - Mutating or external-action language without an approval section.
 
@@ -89,8 +93,9 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
   fragment or query suffixes are ignored for filesystem checks. Malformed
   percent escapes are checked literally. Full, collapsed, and shortcut
   reference-style links are supported; unused, external, and fragment-only
-  definitions are ignored. Escaped closing angle brackets are not supported. A
-  destination whose prefix matches
+  definitions are ignored. Root-relative URL paths are also ignored rather
+  than resolved from the host filesystem root. Escaped closing angle brackets
+  are not supported. A destination whose prefix matches
   `[A-Za-z][A-Za-z0-9+.-]*:` is considered an external URI; the URI itself is
   not fetched or validated.
 - It also detects common backtick and prose relative-reference patterns, not

@@ -332,7 +332,7 @@ function cleanReference(value) {
 }
 
 function shouldIgnore(value) {
-  return /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("#");
+  return /^[a-z][a-z0-9+.-]*:/i.test(value) || value.startsWith("#") || value.startsWith("/");
 }
 
 function uniqueRefs(refs) {
