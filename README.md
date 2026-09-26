@@ -112,3 +112,6 @@ npm test
 npm run smoke
 npm run package:smoke
 ```
+# Updated README
+
+This is an automated update.
