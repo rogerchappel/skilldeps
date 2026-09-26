@@ -116,3 +116,6 @@ npm run package:smoke
 
 <!-- Automated change by spark worker -->
 This change was automatically processed by oss-pipeline-worker-spark-a
+# Updated README
+
+This is an automated update.
