@@ -48,3 +48,6 @@ npm test
 npm run check
 npm run smoke
 ```
+# Updated README
+
+This is an automated update.
