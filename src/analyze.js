@@ -56,7 +56,9 @@ export function summarize(results) {
   const counts = { info: 0, warning: 0, error: 0 };
   for (const result of results) {
     for (const finding of result.findings) {
-      counts[finding.severity] += 1;
+      if (Object.hasOwn(counts, finding.severity)) {
+        counts[finding.severity] += 1;
+      }
     }
   }
   return {
