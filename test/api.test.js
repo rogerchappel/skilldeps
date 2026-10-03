@@ -4,11 +4,23 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { auditSkills } from "../src/index.js";
+import { summarize } from "../src/analyze.js";
 
 test("auditSkills returns summary and results", () => {
   const payload = auditSkills(["fixtures/complete-skill"]);
   assert.equal(payload.summary.status, "pass");
   assert.equal(payload.results.length, 1);
+});
+
+test("summarize ignores unsupported severities and keeps known counts finite", () => {
+  const summary = summarize([{ findings: [
+    { severity: "warning" },
+    { severity: "critical" },
+    { severity: "__proto__" }
+  ] }]);
+
+  assert.deepEqual(summary.findings, { info: 0, warning: 1, error: 0 });
+  assert.ok(Object.values(summary.findings).every(Number.isFinite));
 });
 
 test("auditSkills reports a missing reference-style destination", (t) => {
