@@ -512,3 +512,36 @@ test("normalizes local Markdown destinations for filesystem checks", (t) => {
     ]
   );
 });
+
+test("local links with query strings or fragments resolve by pathname and retain their destinations", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-links-"));
+  try {
+    fs.mkdirSync(path.join(root, "references"));
+    fs.writeFileSync(path.join(root, "references/query.md"), "query target");
+    const skill = path.join(root, "SKILL.md");
+    fs.writeFileSync(skill, [
+      "# Link test",
+      "[query](references/query.md?raw=1)",
+      "[fragment](references/query.md#details)",
+      "[missing query](references/missing.md?raw=1)",
+      "[missing fragment](references/absent.md#details)",
+      ""
+    ].join("\n"));
+
+    const result = analyzeSkill(parseSkillFile(skill));
+    assert.deepEqual(result.references.map(({ value, exists }) => ({ value, exists })), [
+      { value: "references/query.md?raw=1", exists: true },
+      { value: "references/query.md#details", exists: true },
+      { value: "references/missing.md?raw=1", exists: false },
+      { value: "references/absent.md#details", exists: false }
+    ]);
+    assert.deepEqual(result.findings
+      .filter(({ code }) => code === "missing-reference")
+      .map(({ reference, message }) => ({ reference, message })), [
+      { reference: "references/missing.md?raw=1", message: "Referenced path does not exist: references/missing.md?raw=1" },
+      { reference: "references/absent.md#details", message: "Referenced path does not exist: references/absent.md#details" }
+    ]);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
