@@ -187,6 +187,34 @@ test("recognizes level-five and level-six contract headings", (t) => {
   assert.equal(parsed.contracts.validation, true);
 });
 
+test("ignores reference definitions inside tilde and longer backtick fences", (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-fenced-definitions-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "real.md"), "# Present\n");
+  fs.writeFileSync(path.join(root, "SKILL.md"), [
+    "# Fenced reference definitions",
+    "",
+    "See [real guide][real].",
+    "",
+    "~~~~markdown",
+    "[hidden tilde]: ./missing-tilde.md",
+    "~~~~",
+    "",
+    "````markdown",
+    "[hidden backtick]: ./missing-backtick.md",
+    "```",
+    "````",
+    "",
+    "[real]: ./real.md"
+  ].join("\n"));
+
+  const parsed = parseSkillFile(path.join(root, "SKILL.md"));
+  assert.deepEqual(
+    parsed.references.map(({ value, exists }) => ({ value, exists })),
+    [{ value: "./real.md", exists: true }]
+  );
+});
+
 test("ignores deep contract headings inside fenced examples", (t) => {
   const skill = fs.mkdtempSync(path.join(os.tmpdir(), "skilldeps-deep-fences-"));
   t.after(() => fs.rmSync(skill, { recursive: true, force: true }));
