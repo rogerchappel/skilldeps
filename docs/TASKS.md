@@ -4,15 +4,15 @@
 
 - [x] Package scaffold
 - [x] Product requirements
-- [ ] Skill instruction document
-- [ ] Markdown parser and reference extractor
-- [ ] Analyzer findings
-- [ ] JSON and Markdown reporters
-- [ ] CLI with severity gate
-- [ ] Fixtures
-- [ ] Tests
-- [ ] Smoke command
-- [ ] Release-candidate notes
+- [x] Skill instruction document (`SKILL.md`)
+- [x] Markdown parser and reference extractor (`src/scan.js`)
+- [x] Analyzer findings (`src/analyze.js`)
+- [x] JSON and Markdown reporters (`src/report.js`)
+- [x] CLI with severity gate (`bin/skilldeps.js`)
+- [x] Fixtures (`fixtures/`)
+- [x] Tests (`test/`)
+- [x] Smoke command (`npm run smoke`)
+- [x] Release-candidate notes (`docs/RELEASE_CANDIDATE.md`)
 
 ## Later
 
