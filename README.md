@@ -107,10 +107,7 @@ node bin/skilldeps.js fixtures/incomplete-skill --format json
 
 ```bash
 npm ci
-npm run check
-npm test
-npm run smoke
-npm run package:smoke
+npm run release:check
 ```
 # Updated README
 
