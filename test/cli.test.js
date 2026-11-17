@@ -44,6 +44,27 @@ test("cli validates format", () => {
   assert.match(c.output().stderr, /Unsupported format/);
 });
 
+test("cli rejects missing format value with usage diagnostics", () => {
+  const c = capture();
+  const code = run(["fixtures/complete-skill", "--format"], c.io);
+  assert.equal(code, 2);
+  assert.equal(c.output().stderr, "Option requires a value: --format\n");
+});
+
+test("cli rejects missing fail-on value with usage diagnostics", () => {
+  const c = capture();
+  const code = run(["fixtures/complete-skill", "--fail-on"], c.io);
+  assert.equal(code, 2);
+  assert.equal(c.output().stderr, "Option requires a value: --fail-on\n");
+});
+
+test("cli rejects unsupported flags even alongside a valid path", () => {
+  const c = capture();
+  const code = run(["fixtures/complete-skill", "--verbose"], c.io);
+  assert.equal(code, 2);
+  assert.equal(c.output().stderr, "Unsupported option: --verbose\n");
+});
+
 for (const [option, value, diagnostic] of [
   ["--format", "xml", "Unsupported format: xml\n"],
   ["--fail-on", "bogus", "Unsupported severity gate: bogus\n"]
